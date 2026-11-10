@@ -1,0 +1,32 @@
+#pragma code_page(65001)
+#include <windows.h>
+#include "resource.h"
+
+IDM_MYMENU MENU
+BEGIN
+    POPUP "Меню"
+    BEGIN
+        MENUITEM "Робота1", IDM_WORK1
+        MENUITEM "Робота2", IDM_WORK2
+    END
+END
+
+IDD_DIALOG1 DIALOGEX 0, 0, 200, 140
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Робота 1 - Вибір групи"
+FONT 9, "Segoe UI"
+BEGIN
+    LISTBOX         IDC_LIST_GROUPS, 10, 10, 180, 90, LBS_STANDARD | WS_TABSTOP
+    DEFPUSHBUTTON   "Так", IDOK, 40, 110, 50, 14
+    PUSHBUTTON      "Відміна", IDCANCEL, 110, 110, 50, 14
+END
+
+IDD_DIALOG2 DIALOGEX 0, 0, 200, 80
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Робота 2 - Введення тексту"
+FONT 9, "Segoe UI"
+BEGIN
+    EDITTEXT        IDC_EDIT_INPUT, 10, 15, 180, 14, ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "Так", IDOK, 40, 45, 50, 14
+    PUSHBUTTON      "Відміна", IDCANCEL, 110, 45, 50, 14
+END

@@ -1,21 +1,22 @@
+#pragma code_page(1251)
 #include "resource.h"
 #include "winres.h"
 
 IDR_MAIN_MENU MENU
 BEGIN
-    POPUP "Р¤Р°Р№Р»"
+    POPUP "Файл"
     BEGIN
-        MENUITEM "Р’РёС…С–Рґ",                       IDM_FILE_EXIT
+        MENUITEM "Вихід",                       IDM_FILE_EXIT
     END
-    POPUP "РћР±'С”РєС‚Рё"
+    POPUP "Об'єкти"
     BEGIN
-        MENUITEM "РљСЂР°РїРєР°",                      IDM_SHAPE_POINT
-        MENUITEM "Р›С–РЅС–СЏ",                       IDM_SHAPE_LINE
-        MENUITEM "РџСЂСЏРјРѕРєСѓС‚РЅРёРє",                 IDM_SHAPE_RECT
-        MENUITEM "Р•Р»С–РїСЃ",                       IDM_SHAPE_ELLIPSE
+        MENUITEM "Крапка",                      IDM_SHAPE_POINT
+        MENUITEM "Лінія",                       IDM_SHAPE_LINE
+        MENUITEM "Прямокутник",                 IDM_SHAPE_RECT
+        MENUITEM "Еліпс",                       IDM_SHAPE_ELLIPSE
     END
-    POPUP "Р”РѕРІС–РґРєР°"
+    POPUP "Довідка"
     BEGIN
-        MENUITEM "РџСЂРѕ РїСЂРѕРіСЂР°РјСѓ",                40006
+        MENUITEM "Про програму",                40006
     END
 END

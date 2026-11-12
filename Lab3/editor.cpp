@@ -3,10 +3,11 @@
 #include <cmath>
 
 EditorWindow::EditorWindow(HINSTANCE hInstance) 
-    : m_hWnd(NULL), m_hInstance(hInstance), m_currentShape(IDM_SHAPE_POINT), 
+    : m_hWnd(NULL), m_hToolBar(NULL), m_hInstance(hInstance), m_currentShape(IDM_SHAPE_POINT), 
       m_isDrawing(false), m_xStart(0), m_yStart(0), m_xEnd(0), m_yEnd(0), m_shapeCount(0) {
     m_pcshape = new Shape*[m_maxShapes];
 }
+
 EditorWindow::~EditorWindow() {
     for (int i = 0; i < m_shapeCount; i++) {
         delete m_pcshape[i];
@@ -14,6 +15,7 @@ EditorWindow::~EditorWindow() {
     }
     delete[] m_pcshape;
 }
+
 bool EditorWindow::Create(PCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight) {
     WNDCLASSEXW wc = { 0 };
     wc.cbSize = sizeof(WNDCLASSEXW);
@@ -55,6 +57,15 @@ LRESULT CALLBACK EditorWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 LRESULT EditorWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
+    case WM_CREATE:
+        OnCreate();
+        break;
+    case WM_SIZE:
+        OnSize();
+        break;
+    case WM_NOTIFY:
+        OnNotify(lParam);
+        break;
     case WM_INITMENUPOPUP:
         OnInitMenuPopup((HMENU)wParam);
         break;
@@ -84,6 +95,79 @@ LRESULT EditorWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
         return DefWindowProcW(m_hWnd, uMsg, wParam, lParam);
     }
     return 0;
+}
+
+void EditorWindow::OnCreate() {
+    //ініціалізація загальних елементів керування (для Toolbar)
+    INITCOMMONCONTROLSEX icex;
+    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icex.dwICC  = ICC_BAR_CLASSES;
+    InitCommonControlsEx(&icex);
+
+    //створення панелі інструментів із підтримкою підказок
+    m_hToolBar = CreateWindowExW(0, TOOLBARCLASSNAMEW, NULL,
+        WS_CHILD | WS_VISIBLE | TBSTYLE_TOOLTIPS, 0, 0, 0, 0,
+        m_hWnd, (HMENU)2000, m_hInstance, NULL);
+
+    SendMessage(m_hToolBar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+
+    //додавання стандартних іконок Windows (заглушки для фігур)
+    TBADDBITMAP tbab;
+    tbab.hInst = HINST_COMMCTRL;
+    tbab.nID = IDB_STD_SMALL_COLOR;
+    SendMessage(m_hToolBar, TB_ADDBITMAP, 0, (LPARAM)&tbab);
+
+    TBBUTTON tbb[4];
+    ZeroMemory(tbb, sizeof(tbb));
+
+    tbb[0].iBitmap = STD_FILENEW;
+    tbb[0].fsState = TBSTATE_ENABLED;
+    tbb[0].fsStyle = TBSTYLE_BUTTON;
+    tbb[0].idCommand = IDM_SHAPE_POINT;
+
+    tbb[1].iBitmap = STD_FILEOPEN;
+    tbb[1].fsState = TBSTATE_ENABLED;
+    tbb[1].fsStyle = TBSTYLE_BUTTON;
+    tbb[1].idCommand = IDM_SHAPE_LINE;
+
+    tbb[2].iBitmap = STD_FILESAVE;
+    tbb[2].fsState = TBSTATE_ENABLED;
+    tbb[2].fsStyle = TBSTYLE_BUTTON;
+    tbb[2].idCommand = IDM_SHAPE_RECT;
+
+    tbb[3].iBitmap = STD_PRINTPRE;
+    tbb[3].fsState = TBSTATE_ENABLED;
+    tbb[3].fsStyle = TBSTYLE_BUTTON;
+    tbb[3].idCommand = IDM_SHAPE_ELLIPSE;
+
+    SendMessage(m_hToolBar, TB_ADDBUTTONS, 4, (LPARAM)&tbb);
+}
+
+void EditorWindow::OnSize() {
+    SendMessage(m_hToolBar, TB_AUTOSIZE, 0, 0);
+}
+
+//обробник OnNotify для спливаючих підказок
+void EditorWindow::OnNotify(LPARAM lParam) {
+    LPNMHDR lpnm = (LPNMHDR)lParam;
+    if (lpnm->code == TTN_GETDISPINFOW) {
+        LPTOOLTIPTEXTW lpttt = (LPTOOLTIPTEXTW)lParam;
+        lpttt->hinst = m_hInstance;
+        switch (lpttt->hdr.idFrom) {
+        case IDM_SHAPE_POINT:
+            lpttt->lpszText = const_cast<LPWSTR>(L"Крапка");
+            break;
+        case IDM_SHAPE_LINE:
+            lpttt->lpszText = const_cast<LPWSTR>(L"Лінія");
+            break;
+        case IDM_SHAPE_RECT:
+            lpttt->lpszText = const_cast<LPWSTR>(L"Прямокутник");
+            break;
+        case IDM_SHAPE_ELLIPSE:
+            lpttt->lpszText = const_cast<LPWSTR>(L"Еліпс");
+            break;
+        }
+    }
 }
 
 void EditorWindow::OnInitMenuPopup(HMENU hMenu) {

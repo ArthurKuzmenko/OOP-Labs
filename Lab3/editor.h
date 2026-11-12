@@ -1,10 +1,12 @@
 #pragma once
 #include <windows.h>
+#include <commctrl.h> //бібліотека для Toolbar
 #include "shape.h"
 
 class EditorWindow {
 private:
     HWND m_hWnd;
+    HWND m_hToolBar; //вказівник на панель інструментів
     HINSTANCE m_hInstance;
     int m_currentShape;
     bool m_isDrawing;
@@ -22,11 +24,12 @@ public:
     bool Create(PCWSTR lpWindowName, DWORD dwStyle, int x = CW_USEDEFAULT, int y = CW_USEDEFAULT, int nWidth = 800, int nHeight = 600);
     HWND Window() const { return m_hWnd; }
 
-    //статична процедура вікна для перенаправлення подій у клас
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     
-    //методи-обробники подій
     LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    void OnCreate();
+    void OnSize();
+    void OnNotify(LPARAM lParam);
     void OnCommand(WPARAM wParam, LPARAM lParam);
     void OnLButtonDown(LPARAM lParam);
     void OnMouseMove(LPARAM lParam);

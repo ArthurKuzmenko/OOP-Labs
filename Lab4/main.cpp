@@ -1,20 +1,19 @@
 #include <windows.h>
 #include "editor.h"
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    //створює екземпляр класу-редактора
-    EditorWindow editor(hInstance);
+//вар11(непарний):глобальний статичний об'єкт класу MyEditor
+static MyEditor g_editor;
 
-    //створює вікно
-    if (!editor.Create(L"Графічний редактор", WS_OVERLAPPEDWINDOW)) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    g_editor.Init(hInstance);
+
+    if (!g_editor.Create(L"Графічний редактор(Лаб4)", WS_OVERLAPPEDWINDOW)) {
         return 0;
     }
 
-    //показує вікно
-    ShowWindow(editor.Window(), nCmdShow);
-    UpdateWindow(editor.Window());
+    ShowWindow(g_editor.Window(), nCmdShow);
+    UpdateWindow(g_editor.Window());
 
-    //головний цикл обробки повідомлень
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);

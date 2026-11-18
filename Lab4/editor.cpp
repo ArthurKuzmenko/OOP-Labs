@@ -2,13 +2,13 @@
 #include "resource.h"
 #include <cmath>
 
-EditorWindow::EditorWindow(HINSTANCE hInstance) 
-    : m_hWnd(NULL), m_hToolBar(NULL), m_hInstance(hInstance), m_currentShape(IDM_SHAPE_POINT), 
+MyEditor::MyEditor()
+    : m_hWnd(NULL), m_hToolBar(NULL), m_hInstance(NULL), m_currentShape(IDM_SHAPE_POINT),
       m_isDrawing(false), m_xStart(0), m_yStart(0), m_xEnd(0), m_yEnd(0), m_shapeCount(0) {
     m_pcshape = new Shape*[m_maxShapes];
 }
 
-EditorWindow::~EditorWindow() {
+MyEditor::~MyEditor() {
     for (int i = 0; i < m_shapeCount; i++) {
         delete m_pcshape[i];
         m_pcshape[i] = nullptr;
@@ -16,20 +16,24 @@ EditorWindow::~EditorWindow() {
     delete[] m_pcshape;
 }
 
-bool EditorWindow::Create(PCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight) {
+void MyEditor::Init(HINSTANCE hInstance) {
+    m_hInstance = hInstance;
+}
+
+bool MyEditor::Create(PCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight) {
     WNDCLASSEXW wc = { 0 };
     wc.cbSize = sizeof(WNDCLASSEXW);
-    wc.lpfnWndProc = EditorWindow::WindowProc;
+    wc.lpfnWndProc = MyEditor::WindowProc;
     wc.hInstance = m_hInstance;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszMenuName = MAKEINTRESOURCEW(IDR_MAIN_MENU);
-    wc.lpszClassName = L"Lab3EditorClass";
+    wc.lpszClassName = L"Lab4EditorClass";
 
     RegisterClassExW(&wc);
 
     m_hWnd = CreateWindowW(
-        L"Lab3EditorClass", lpWindowName, dwStyle,
+        L"Lab4EditorClass", lpWindowName, dwStyle,
         x, y, nWidth, nHeight,
         NULL, NULL, m_hInstance, this
     );
@@ -37,16 +41,16 @@ bool EditorWindow::Create(PCWSTR lpWindowName, DWORD dwStyle, int x, int y, int 
     return (m_hWnd ? true : false);
 }
 
-LRESULT CALLBACK EditorWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    EditorWindow* pThis = nullptr;
+LRESULT CALLBACK MyEditor::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    MyEditor* pThis = nullptr;
 
     if (uMsg == WM_NCCREATE) {
         CREATESTRUCT* pCreate = (CREATESTRUCT*)lParam;
-        pThis = (EditorWindow*)pCreate->lpCreateParams;
+        pThis = (MyEditor*)pCreate->lpCreateParams;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pThis);
         pThis->m_hWnd = hwnd;
     } else {
-        pThis = (EditorWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        pThis = (MyEditor*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     }
 
     if (pThis) {
@@ -55,7 +59,7 @@ LRESULT CALLBACK EditorWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 }
 
-LRESULT EditorWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT MyEditor::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
     case WM_CREATE:
         OnCreate();
@@ -97,21 +101,18 @@ LRESULT EditorWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void EditorWindow::OnCreate() {
-    //ініціалізація загальних елементів керування (для Toolbar)
+void MyEditor::OnCreate() {
     INITCOMMONCONTROLSEX icex;
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC  = ICC_BAR_CLASSES;
     InitCommonControlsEx(&icex);
 
-    //створення панелі інструментів із підтримкою підказок
     m_hToolBar = CreateWindowExW(0, TOOLBARCLASSNAMEW, NULL,
         WS_CHILD | WS_VISIBLE | TBSTYLE_TOOLTIPS, 0, 0, 0, 0,
         m_hWnd, (HMENU)2000, m_hInstance, NULL);
 
     SendMessage(m_hToolBar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
 
-    //додавання власних іконок фігур із ресурсів
     HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR24 | ILC_MASK, 4, 0);
     HBITMAP hBmp = (HBITMAP)LoadImageW(m_hInstance, MAKEINTRESOURCEW(IDB_TOOLBAR), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
     ImageList_AddMasked(hImageList, hBmp, RGB(192, 192, 192));
@@ -121,35 +122,19 @@ void EditorWindow::OnCreate() {
     TBBUTTON tbb[4];
     ZeroMemory(tbb, sizeof(tbb));
 
-    tbb[0].iBitmap = 0; //крапка
-    tbb[0].fsState = TBSTATE_ENABLED;
-    tbb[0].fsStyle = TBSTYLE_BUTTON;
-    tbb[0].idCommand = IDM_SHAPE_POINT;
-
-    tbb[1].iBitmap = 1; //лінія
-    tbb[1].fsState = TBSTATE_ENABLED;
-    tbb[1].fsStyle = TBSTYLE_BUTTON;
-    tbb[1].idCommand = IDM_SHAPE_LINE;
-
-    tbb[2].iBitmap = 2; //прямокутник
-    tbb[2].fsState = TBSTATE_ENABLED;
-    tbb[2].fsStyle = TBSTYLE_BUTTON;
-    tbb[2].idCommand = IDM_SHAPE_RECT;
-
-    tbb[3].iBitmap = 3; //еліпс
-    tbb[3].fsState = TBSTATE_ENABLED;
-    tbb[3].fsStyle = TBSTYLE_BUTTON;
-    tbb[3].idCommand = IDM_SHAPE_ELLIPSE;
+    tbb[0].iBitmap = 0; tbb[0].fsState = TBSTATE_ENABLED; tbb[0].fsStyle = TBSTYLE_BUTTON; tbb[0].idCommand = IDM_SHAPE_POINT;
+    tbb[1].iBitmap = 1; tbb[1].fsState = TBSTATE_ENABLED; tbb[1].fsStyle = TBSTYLE_BUTTON; tbb[1].idCommand = IDM_SHAPE_LINE;
+    tbb[2].iBitmap = 2; tbb[2].fsState = TBSTATE_ENABLED; tbb[2].fsStyle = TBSTYLE_BUTTON; tbb[2].idCommand = IDM_SHAPE_RECT;
+    tbb[3].iBitmap = 3; tbb[3].fsState = TBSTATE_ENABLED; tbb[3].fsStyle = TBSTYLE_BUTTON; tbb[3].idCommand = IDM_SHAPE_ELLIPSE;
 
     SendMessage(m_hToolBar, TB_ADDBUTTONS, 4, (LPARAM)&tbb);
 }
 
-void EditorWindow::OnSize() {
+void MyEditor::OnSize() {
     SendMessage(m_hToolBar, TB_AUTOSIZE, 0, 0);
 }
 
-//обробник OnNotify для спливаючих підказок
-void EditorWindow::OnNotify(LPARAM lParam) {
+void MyEditor::OnNotify(LPARAM lParam) {
     LPNMHDR lpnm = (LPNMHDR)lParam;
     if (lpnm->code == TTN_GETDISPINFOW) {
         LPTOOLTIPTEXTW lpttt = (LPTOOLTIPTEXTW)lParam;
@@ -171,14 +156,14 @@ void EditorWindow::OnNotify(LPARAM lParam) {
     }
 }
 
-void EditorWindow::OnInitMenuPopup(HMENU hMenu) {
+void MyEditor::OnInitMenuPopup(HMENU hMenu) {
     CheckMenuItem(hMenu, IDM_SHAPE_POINT, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_POINT ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, IDM_SHAPE_LINE, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_LINE ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, IDM_SHAPE_RECT, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_RECT ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, IDM_SHAPE_ELLIPSE, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_ELLIPSE ? MF_CHECKED : MF_UNCHECKED));
 }
 
-void EditorWindow::OnCommand(WPARAM wParam, LPARAM lParam) {
+void MyEditor::OnCommand(WPARAM wParam, LPARAM lParam) {
     switch (LOWORD(wParam)) {
     case IDM_SHAPE_POINT:
         m_currentShape = IDM_SHAPE_POINT;
@@ -198,7 +183,7 @@ void EditorWindow::OnCommand(WPARAM wParam, LPARAM lParam) {
     }
 }
 
-void EditorWindow::DrawRubberBand(long x1, long y1, long x2, long y2, int shapeType) {
+void MyEditor::DrawRubberBand(long x1, long y1, long x2, long y2, int shapeType) {
     HDC hdc = GetDC(m_hWnd);
     int oldROP = SetROP2(hdc, R2_NOTXORPEN);
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
@@ -226,7 +211,7 @@ void EditorWindow::DrawRubberBand(long x1, long y1, long x2, long y2, int shapeT
     ReleaseDC(m_hWnd, hdc);
 }
 
-void EditorWindow::OnLButtonDown(LPARAM lParam) {
+void MyEditor::OnLButtonDown(LPARAM lParam) {
     if (m_shapeCount < m_maxShapes) {
         m_isDrawing = true;
         m_xStart = LOWORD(lParam);
@@ -237,7 +222,7 @@ void EditorWindow::OnLButtonDown(LPARAM lParam) {
     }
 }
 
-void EditorWindow::OnMouseMove(LPARAM lParam) {
+void MyEditor::OnMouseMove(LPARAM lParam) {
     if (m_isDrawing) {
         DrawRubberBand(m_xStart, m_yStart, m_xEnd, m_yEnd, m_currentShape);
         m_xEnd = LOWORD(lParam);
@@ -246,7 +231,7 @@ void EditorWindow::OnMouseMove(LPARAM lParam) {
     }
 }
 
-void EditorWindow::OnLButtonUp(LPARAM lParam) {
+void MyEditor::OnLButtonUp(LPARAM lParam) {
     if (m_isDrawing) {
         DrawRubberBand(m_xStart, m_yStart, m_xEnd, m_yEnd, m_currentShape);
         m_xEnd = LOWORD(lParam);
@@ -258,7 +243,7 @@ void EditorWindow::OnLButtonUp(LPARAM lParam) {
             Shape* pShape = nullptr;
             if (m_currentShape == IDM_SHAPE_POINT) pShape = new PointShape();
             else if (m_currentShape == IDM_SHAPE_LINE) pShape = new LineShape();
-            else if (m_currentShape == IDM_SHAPE_RECT) pShape = new RectangleShape();
+            else if (m_currentShape == IDM_SHAPE_RECT) pShape = new RectShape();
             else if (m_currentShape == IDM_SHAPE_ELLIPSE) pShape = new EllipseShape();
 
             if (pShape) {
@@ -270,7 +255,7 @@ void EditorWindow::OnLButtonUp(LPARAM lParam) {
     }
 }
 
-void EditorWindow::OnPaint(HDC hdc) {
+void MyEditor::OnPaint(HDC hdc) {
     for (int i = 0; i < m_shapeCount; i++) {
         if (m_pcshape[i]) {
             m_pcshape[i]->Show(hdc);

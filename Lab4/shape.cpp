@@ -12,6 +12,7 @@ void Shape::SetCoord(long x1, long y1, long x2, long y2) {
 void PointShape::Show(HDC hdc) {
     SetPixel(hdc, xs1, ys1, RGB(0, 0, 0));
 }
+
 //лінія
 void LineShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
@@ -23,10 +24,11 @@ void LineShape::Show(HDC hdc) {
     SelectObject(hdc, hOldPen);
     DeleteObject(hPen);
 }
-//прямокутник(12 вар:ввід по 2 протилежних кутах,жовте заповнення)
-void RectangleShape::Show(HDC hdc) {
+
+//прямокутник(ввід по 2 протилежних кутах, жовте заповнення)
+void RectShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-    HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 0)); //жовтий колір
+    HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 0));
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
 
@@ -37,10 +39,11 @@ void RectangleShape::Show(HDC hdc) {
     DeleteObject(hPen);
     DeleteObject(hBrush);
 }
-//еліпс(12 вар:ввід від центру до кута,без заповнення)
+
+//еліпс(ввід від центру до кута, без заповнення)
 void EllipseShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-    HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);// прозоре заповнення
+    HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
 

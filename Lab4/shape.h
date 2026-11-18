@@ -9,19 +9,23 @@ public:
     void SetCoord(long x1, long y1, long x2, long y2);
     virtual void Show(HDC hdc) = 0;
 };
-class PointShape : public Shape {
+
+class PointShape : virtual public Shape {
 public:
     void Show(HDC hdc) override;
 };
-class LineShape : public Shape {
+
+class LineShape : virtual public Shape {
 public:
     void Show(HDC hdc) override;
 };
-class RectangleShape : public Shape {
+
+class RectShape : virtual public Shape {
 public:
     void Show(HDC hdc) override;
 };
-class EllipseShape : public Shape {
+
+class EllipseShape : virtual public Shape {
 public:
     void Show(HDC hdc) override;
 };

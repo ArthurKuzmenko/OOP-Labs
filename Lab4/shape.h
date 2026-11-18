@@ -8,24 +8,29 @@ public:
     virtual ~Shape() {}
     void SetCoord(long x1, long y1, long x2, long y2);
     virtual void Show(HDC hdc) = 0;
+    virtual void DrawRubberBand(HDC hdc) = 0;
 };
 
 class PointShape : virtual public Shape {
 public:
     void Show(HDC hdc) override;
+    void DrawRubberBand(HDC hdc) override;
 };
 
 class LineShape : virtual public Shape {
 public:
     void Show(HDC hdc) override;
+    void DrawRubberBand(HDC hdc) override;
 };
 
 class RectShape : virtual public Shape {
 public:
     void Show(HDC hdc) override;
+    void DrawRubberBand(HDC hdc) override;
 };
 
 class EllipseShape : virtual public Shape {
 public:
     void Show(HDC hdc) override;
+    void DrawRubberBand(HDC hdc) override;
 };

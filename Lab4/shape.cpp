@@ -8,12 +8,17 @@ void Shape::SetCoord(long x1, long y1, long x2, long y2) {
     ys2 = y2;
 }
 
-//крапка
+// крапка
 void PointShape::Show(HDC hdc) {
     SetPixel(hdc, xs1, ys1, RGB(0, 0, 0));
 }
 
-//лінія
+void PointShape::DrawRubberBand(HDC hdc) {
+    MoveToEx(hdc, xs1, ys1, NULL);
+    LineTo(hdc, xs1 + 1, ys1 + 1);
+}
+
+// лінія
 void LineShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
@@ -25,7 +30,12 @@ void LineShape::Show(HDC hdc) {
     DeleteObject(hPen);
 }
 
-//прямокутник(ввід по 2 протилежних кутах, жовте заповнення)
+void LineShape::DrawRubberBand(HDC hdc) {
+    MoveToEx(hdc, xs1, ys1, NULL);
+    LineTo(hdc, xs2, ys2);
+}
+
+// прямокутник (ввід по 2 протилежних кутах, жовте заповнення)
 void RectShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 0));
@@ -40,7 +50,11 @@ void RectShape::Show(HDC hdc) {
     DeleteObject(hBrush);
 }
 
-//еліпс(ввід від центру до кута, без заповнення)
+void RectShape::DrawRubberBand(HDC hdc) {
+    Rectangle(hdc, xs1, ys1, xs2, ys2);
+}
+
+// еліпс (ввід від центру до кута, без заповнення)
 void EllipseShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
@@ -54,4 +68,10 @@ void EllipseShape::Show(HDC hdc) {
     SelectObject(hdc, hOldPen);
     SelectObject(hdc, hOldBrush);
     DeleteObject(hPen);
+}
+
+void EllipseShape::DrawRubberBand(HDC hdc) {
+    long dx = std::abs(xs2 - xs1);
+    long dy = std::abs(ys2 - ys1);
+    Ellipse(hdc, xs1 - dx, ys1 - dy, xs1 + dx, ys1 + dy);
 }

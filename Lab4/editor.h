@@ -12,10 +12,12 @@ private:
     bool m_isDrawing;
     long m_xStart, m_yStart, m_xEnd, m_yEnd;
     Shape** m_pcshape;
+    Shape* m_pDraftShape;
     int m_shapeCount;
     static const int m_maxShapes = 111; //вар11
 
-    void DrawRubberBand(long x1, long y1, long x2, long y2, int shapeType);
+    Shape* CreateSelectedShape();
+    void DrawRubberBand();
 
 public:
     MyEditor();

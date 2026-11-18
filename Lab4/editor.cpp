@@ -4,11 +4,13 @@
 
 MyEditor::MyEditor()
     : m_hWnd(NULL), m_hToolBar(NULL), m_hInstance(NULL), m_currentShape(IDM_SHAPE_POINT),
-      m_isDrawing(false), m_xStart(0), m_yStart(0), m_xEnd(0), m_yEnd(0), m_shapeCount(0) {
+      m_isDrawing(false), m_xStart(0), m_yStart(0), m_xEnd(0), m_yEnd(0),
+      m_pDraftShape(nullptr), m_shapeCount(0) {
     m_pcshape = new Shape*[m_maxShapes];
 }
 
 MyEditor::~MyEditor() {
+    delete m_pDraftShape;
     for (int i = 0; i < m_shapeCount; i++) {
         delete m_pcshape[i];
         m_pcshape[i] = nullptr;
@@ -183,26 +185,28 @@ void MyEditor::OnCommand(WPARAM wParam, LPARAM lParam) {
     }
 }
 
-void MyEditor::DrawRubberBand(long x1, long y1, long x2, long y2, int shapeType) {
+Shape* MyEditor::CreateSelectedShape() {
+    switch (m_currentShape) {
+    case IDM_SHAPE_POINT:   return new PointShape();
+    case IDM_SHAPE_LINE:    return new LineShape();
+    case IDM_SHAPE_RECT:    return new RectShape();
+    case IDM_SHAPE_ELLIPSE: return new EllipseShape();
+    default:                return nullptr;
+    }
+}
+
+void MyEditor::DrawRubberBand() {
+    if (!m_pDraftShape) return;
+
     HDC hdc = GetDC(m_hWnd);
     int oldROP = SetROP2(hdc, R2_NOTXORPEN);
-    HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+    // Пунктирний стиль лінії для "гумового" сліду (вимога п.3)
+    HPEN hPen = CreatePen(PS_DOT, 1, RGB(0, 0, 0));
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, GetStockObject(NULL_BRUSH));
 
-    if (shapeType == IDM_SHAPE_POINT) {
-        MoveToEx(hdc, x1, y1, NULL);
-        LineTo(hdc, x1 + 1, y1 + 1);
-    } else if (shapeType == IDM_SHAPE_LINE) {
-        MoveToEx(hdc, x1, y1, NULL);
-        LineTo(hdc, x2, y2);
-    } else if (shapeType == IDM_SHAPE_RECT) {
-        Rectangle(hdc, x1, y1, x2, y2);
-    } else if (shapeType == IDM_SHAPE_ELLIPSE) {
-        long dx = std::abs(x2 - x1);
-        long dy = std::abs(y2 - y1);
-        Ellipse(hdc, x1 - dx, y1 - dy, x1 + dx, y1 + dy);
-    }
+    m_pDraftShape->SetCoord(m_xStart, m_yStart, m_xEnd, m_yEnd);
+    m_pDraftShape->DrawRubberBand(hdc);
 
     SelectObject(hdc, hOldBrush);
     SelectObject(hdc, hOldPen);
@@ -213,45 +217,39 @@ void MyEditor::DrawRubberBand(long x1, long y1, long x2, long y2, int shapeType)
 
 void MyEditor::OnLButtonDown(LPARAM lParam) {
     if (m_shapeCount < m_maxShapes) {
-        m_isDrawing = true;
-        m_xStart = LOWORD(lParam);
-        m_yStart = HIWORD(lParam);
-        m_xEnd = m_xStart;
-        m_yEnd = m_yStart;
-        SetCapture(m_hWnd);
+        m_pDraftShape = CreateSelectedShape();
+        if (m_pDraftShape) {
+            m_isDrawing = true;
+            m_xStart = LOWORD(lParam);
+            m_yStart = HIWORD(lParam);
+            m_xEnd = m_xStart;
+            m_yEnd = m_yStart;
+            SetCapture(m_hWnd);
+        }
     }
 }
 
 void MyEditor::OnMouseMove(LPARAM lParam) {
-    if (m_isDrawing) {
-        DrawRubberBand(m_xStart, m_yStart, m_xEnd, m_yEnd, m_currentShape);
+    if (m_isDrawing && m_pDraftShape) {
+        DrawRubberBand();
         m_xEnd = LOWORD(lParam);
         m_yEnd = HIWORD(lParam);
-        DrawRubberBand(m_xStart, m_yStart, m_xEnd, m_yEnd, m_currentShape);
+        DrawRubberBand();
     }
 }
 
 void MyEditor::OnLButtonUp(LPARAM lParam) {
-    if (m_isDrawing) {
-        DrawRubberBand(m_xStart, m_yStart, m_xEnd, m_yEnd, m_currentShape);
+    if (m_isDrawing && m_pDraftShape) {
+        DrawRubberBand();
         m_xEnd = LOWORD(lParam);
         m_yEnd = HIWORD(lParam);
         m_isDrawing = false;
         ReleaseCapture();
 
-        if (m_shapeCount < m_maxShapes) {
-            Shape* pShape = nullptr;
-            if (m_currentShape == IDM_SHAPE_POINT) pShape = new PointShape();
-            else if (m_currentShape == IDM_SHAPE_LINE) pShape = new LineShape();
-            else if (m_currentShape == IDM_SHAPE_RECT) pShape = new RectShape();
-            else if (m_currentShape == IDM_SHAPE_ELLIPSE) pShape = new EllipseShape();
-
-            if (pShape) {
-                pShape->SetCoord(m_xStart, m_yStart, m_xEnd, m_yEnd);
-                m_pcshape[m_shapeCount++] = pShape;
-                InvalidateRect(m_hWnd, NULL, TRUE);
-            }
-        }
+        m_pDraftShape->SetCoord(m_xStart, m_yStart, m_xEnd, m_yEnd);
+        m_pcshape[m_shapeCount++] = m_pDraftShape;
+        m_pDraftShape = nullptr;
+        InvalidateRect(m_hWnd, NULL, TRUE);
     }
 }
 

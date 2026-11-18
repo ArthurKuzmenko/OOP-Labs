@@ -8,7 +8,7 @@ void Shape::SetCoord(long x1, long y1, long x2, long y2) {
     ys2 = y2;
 }
 
-// крапка
+//крапка
 void PointShape::Show(HDC hdc) {
     SetPixel(hdc, xs1, ys1, RGB(0, 0, 0));
 }
@@ -18,7 +18,7 @@ void PointShape::DrawRubberBand(HDC hdc) {
     LineTo(hdc, xs1 + 1, ys1 + 1);
 }
 
-// лінія
+//лінія
 void LineShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
@@ -35,7 +35,7 @@ void LineShape::DrawRubberBand(HDC hdc) {
     LineTo(hdc, xs2, ys2);
 }
 
-// прямокутник (ввід по 2 протилежних кутах, жовте заповнення)
+//прямокутник(ввід по 2 протилежних кутах, жовте заповнення)
 void RectShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 0));
@@ -54,7 +54,7 @@ void RectShape::DrawRubberBand(HDC hdc) {
     Rectangle(hdc, xs1, ys1, xs2, ys2);
 }
 
-// еліпс (ввід від центру до кута, без заповнення)
+//еліпс(ввід від центру до кута, без заповнення)
 void EllipseShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
@@ -74,4 +74,37 @@ void EllipseShape::DrawRubberBand(HDC hdc) {
     long dx = std::abs(xs2 - xs1);
     long dy = std::abs(ys2 - ys1);
     Ellipse(hdc, xs1 - dx, ys1 - dy, xs1 + dx, ys1 + dy);
+}
+
+//лінія з кружечками(використовує Show із LineShape та EllipseShape)
+void LineWithCirclesShape::Show(HDC hdc) {
+    long origX1 = xs1, origY1 = ys1, origX2 = xs2, origY2 = ys2;
+
+    //малюємо лінію базовим методом LineShape::Show
+    LineShape::Show(hdc);
+
+    //малює перший кружечок у точці(origX1, origY1) через EllipseShape::Show
+    SetCoord(origX1, origY1, origX1 + RADIUS, origY1 + RADIUS);
+    EllipseShape::Show(hdc);
+
+    //малює другий кружечок у точці(origX2, origY2) через EllipseShape::Show
+    SetCoord(origX2, origY2, origX2 + RADIUS, origY2 + RADIUS);
+    EllipseShape::Show(hdc);
+
+    //відновлює початкові координати фігури
+    SetCoord(origX1, origY1, origX2, origY2);
+}
+
+void LineWithCirclesShape::DrawRubberBand(HDC hdc) {
+    long origX1 = xs1, origY1 = ys1, origX2 = xs2, origY2 = ys2;
+
+    LineShape::DrawRubberBand(hdc);
+
+    SetCoord(origX1, origY1, origX1 + RADIUS, origY1 + RADIUS);
+    EllipseShape::DrawRubberBand(hdc);
+
+    SetCoord(origX2, origY2, origX2 + RADIUS, origY2 + RADIUS);
+    EllipseShape::DrawRubberBand(hdc);
+
+    SetCoord(origX1, origY1, origX2, origY2);
 }

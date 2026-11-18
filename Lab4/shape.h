@@ -34,3 +34,12 @@ public:
     void Show(HDC hdc) override;
     void DrawRubberBand(HDC hdc) override;
 };
+
+//нова фігура 1:лінія з кружечками(множинне успадкування від LineShape та EllipseShape)
+class LineWithCirclesShape : public LineShape, public EllipseShape {
+private:
+    static const long RADIUS = 6;
+public:
+    void Show(HDC hdc) override;
+    void DrawRubberBand(HDC hdc) override;
+};

@@ -14,11 +14,11 @@ BEGIN
         MENUITEM "Лінія",                       IDM_SHAPE_LINE
         MENUITEM "Прямокутник",                 IDM_SHAPE_RECT
         MENUITEM "Еліпс",                       IDM_SHAPE_ELLIPSE
+        MENUITEM "Лінія з кружечками",          IDM_SHAPE_LINEOO
+        MENUITEM "Каркас куба",                 IDM_SHAPE_CUBE
     END
     POPUP "Довідка"
     BEGIN
-        MENUITEM "Про програму...",                40006
+        MENUITEM "Про програму...",             40006
     END
 END
-
-IDB_TOOLBAR BITMAP "toolbar.bmp"

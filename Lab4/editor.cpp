@@ -103,33 +103,103 @@ LRESULT MyEditor::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void MyEditor::OnCreate() {
+void MyEditor::CreateToolbar() {
     INITCOMMONCONTROLSEX icex;
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC  = ICC_BAR_CLASSES;
     InitCommonControlsEx(&icex);
 
-    m_hToolBar = CreateWindowExW(0, TOOLBARCLASSNAMEW, NULL,
-        WS_CHILD | WS_VISIBLE | TBSTYLE_TOOLTIPS, 0, 0, 0, 0,
-        m_hWnd, (HMENU)2000, m_hInstance, NULL);
+    HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR24 | ILC_MASK, 6, 0);
 
-    SendMessage(m_hToolBar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+    HDC hdcScreen = GetDC(m_hWnd);
+    HDC hdcMem = CreateCompatibleDC(hdcScreen);
+    HBITMAP hBmp = CreateCompatibleBitmap(hdcScreen, 96, 16);
+    HBITMAP hOldBmp = (HBITMAP)SelectObject(hdcMem, hBmp);
 
-    HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR24 | ILC_MASK, 4, 0);
-    HBITMAP hBmp = (HBITMAP)LoadImageW(m_hInstance, MAKEINTRESOURCEW(IDB_TOOLBAR), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
-    ImageList_AddMasked(hImageList, hBmp, RGB(192, 192, 192));
+    COLORREF maskColor = RGB(255, 0, 255);
+    HBRUSH hBgBrush = CreateSolidBrush(maskColor);
+    RECT rcFull = { 0, 0, 96, 16 };
+    FillRect(hdcMem, &rcFull, hBgBrush);
+    DeleteObject(hBgBrush);
+
+    HPEN hBlackPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+    HPEN hOldPen = (HPEN)SelectObject(hdcMem, hBlackPen);
+
+    //крапка
+    HBRUSH hBlackBrush = CreateSolidBrush(RGB(0, 0, 0));
+    HBRUSH hOldBrush = (HBRUSH)SelectObject(hdcMem, hBlackBrush);
+    Ellipse(hdcMem, 6, 6, 11, 11);
+    SelectObject(hdcMem, hOldBrush);
+    DeleteObject(hBlackBrush);
+
+    //лінія
+    MoveToEx(hdcMem, 16 + 3, 12, NULL);
+    LineTo(hdcMem, 16 + 13, 3);
+
+    //прямокутник(жовте заповнення)
+    HBRUSH hYellowBrush = CreateSolidBrush(RGB(255, 255, 0));
+    hOldBrush = (HBRUSH)SelectObject(hdcMem, hYellowBrush);
+    Rectangle(hdcMem, 32 + 3, 3, 32 + 13, 13);
+    SelectObject(hdcMem, hOldBrush);
+    DeleteObject(hYellowBrush);
+
+    //еліпс(без заповнення)
+    hOldBrush = (HBRUSH)SelectObject(hdcMem, GetStockObject(NULL_BRUSH));
+    Ellipse(hdcMem, 48 + 2, 4, 48 + 14, 12);
+    SelectObject(hdcMem, hOldBrush);
+
+    //лінія з кружечками
+    MoveToEx(hdcMem, 64 + 4, 11, NULL);
+    LineTo(hdcMem, 64 + 12, 4);
+    hOldBrush = (HBRUSH)SelectObject(hdcMem, GetStockObject(NULL_BRUSH));
+    Ellipse(hdcMem, 64 + 2, 9, 64 + 6, 13);
+    Ellipse(hdcMem, 64 + 10, 2, 64 + 14, 6);
+    SelectObject(hdcMem, hOldBrush);
+
+    //каркас куба
+    hOldBrush = (HBRUSH)SelectObject(hdcMem, GetStockObject(NULL_BRUSH));
+    Rectangle(hdcMem, 80 + 2, 6, 80 + 11, 14);
+    Rectangle(hdcMem, 80 + 5, 2, 80 + 14, 10);
+    MoveToEx(hdcMem, 80 + 2, 6, NULL);  LineTo(hdcMem, 80 + 5, 2);
+    MoveToEx(hdcMem, 80 + 11, 6, NULL); LineTo(hdcMem, 80 + 14, 2);
+    MoveToEx(hdcMem, 80 + 2, 14, NULL); LineTo(hdcMem, 80 + 5, 10);
+    MoveToEx(hdcMem, 80 + 11, 14, NULL);LineTo(hdcMem, 80 + 14, 10);
+    SelectObject(hdcMem, hOldBrush);
+
+    SelectObject(hdcMem, hOldPen);
+    DeleteObject(hBlackPen);
+    SelectObject(hdcMem, hOldBmp);
+    DeleteDC(hdcMem);
+    ReleaseDC(m_hWnd, hdcScreen);
+
+    ImageList_AddMasked(hImageList, hBmp, maskColor);
     DeleteObject(hBmp);
-    SendMessage(m_hToolBar, TB_SETIMAGELIST, 0, (LPARAM)hImageList);
 
-    TBBUTTON tbb[4];
+    TBBUTTON tbb[6];
     ZeroMemory(tbb, sizeof(tbb));
 
-    tbb[0].iBitmap = 0; tbb[0].fsState = TBSTATE_ENABLED; tbb[0].fsStyle = TBSTYLE_BUTTON; tbb[0].idCommand = IDM_SHAPE_POINT;
-    tbb[1].iBitmap = 1; tbb[1].fsState = TBSTATE_ENABLED; tbb[1].fsStyle = TBSTYLE_BUTTON; tbb[1].idCommand = IDM_SHAPE_LINE;
-    tbb[2].iBitmap = 2; tbb[2].fsState = TBSTATE_ENABLED; tbb[2].fsStyle = TBSTYLE_BUTTON; tbb[2].idCommand = IDM_SHAPE_RECT;
-    tbb[3].iBitmap = 3; tbb[3].fsState = TBSTATE_ENABLED; tbb[3].fsStyle = TBSTYLE_BUTTON; tbb[3].idCommand = IDM_SHAPE_ELLIPSE;
+    tbb[0].iBitmap = 0; tbb[0].idCommand = IDM_SHAPE_POINT;   tbb[0].fsState = TBSTATE_ENABLED | TBSTATE_CHECKED; tbb[0].fsStyle = TBSTYLE_CHECKGROUP;
+    tbb[1].iBitmap = 1; tbb[1].idCommand = IDM_SHAPE_LINE;    tbb[1].fsState = TBSTATE_ENABLED;                   tbb[1].fsStyle = TBSTYLE_CHECKGROUP;
+    tbb[2].iBitmap = 2; tbb[2].idCommand = IDM_SHAPE_RECT;    tbb[2].fsState = TBSTATE_ENABLED;                   tbb[2].fsStyle = TBSTYLE_CHECKGROUP;
+    tbb[3].iBitmap = 3; tbb[3].idCommand = IDM_SHAPE_ELLIPSE; tbb[3].fsState = TBSTATE_ENABLED;                   tbb[3].fsStyle = TBSTYLE_CHECKGROUP;
+    tbb[4].iBitmap = 4; tbb[4].idCommand = IDM_SHAPE_LINEOO;  tbb[4].fsState = TBSTATE_ENABLED;                   tbb[4].fsStyle = TBSTYLE_CHECKGROUP;
+    tbb[5].iBitmap = 5; tbb[5].idCommand = IDM_SHAPE_CUBE;    tbb[5].fsState = TBSTATE_ENABLED;                   tbb[5].fsStyle = TBSTYLE_CHECKGROUP;
 
-    SendMessage(m_hToolBar, TB_ADDBUTTONS, 4, (LPARAM)&tbb);
+    m_hToolBar = CreateWindowExW(
+        0, TOOLBARCLASSNAMEW, NULL,
+        WS_CHILD | WS_VISIBLE | WS_BORDER | TBSTYLE_TOOLTIPS,
+        0, 0, 0, 0,
+        m_hWnd, (HMENU)2000, m_hInstance, NULL
+    );
+
+    SendMessage(m_hToolBar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+    SendMessage(m_hToolBar, TB_SETIMAGELIST, 0, (LPARAM)hImageList);
+    SendMessage(m_hToolBar, TB_ADDBUTTONS, 6, (LPARAM)&tbb);
+    SendMessage(m_hToolBar, TB_AUTOSIZE, 0, 0);
+}
+
+void MyEditor::OnCreate() {
+    CreateToolbar();
 }
 
 void MyEditor::OnSize() {
@@ -154,30 +224,40 @@ void MyEditor::OnNotify(LPARAM lParam) {
         case IDM_SHAPE_ELLIPSE:
             lpttt->lpszText = const_cast<LPWSTR>(L"Еліпс");
             break;
+        case IDM_SHAPE_LINEOO:
+            lpttt->lpszText = const_cast<LPWSTR>(L"Лінія з кружечками");
+            break;
+        case IDM_SHAPE_CUBE:
+            lpttt->lpszText = const_cast<LPWSTR>(L"Каркас куба");
+            break;
         }
     }
 }
 
 void MyEditor::OnInitMenuPopup(HMENU hMenu) {
-    CheckMenuItem(hMenu, IDM_SHAPE_POINT, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_POINT ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hMenu, IDM_SHAPE_LINE, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_LINE ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hMenu, IDM_SHAPE_RECT, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_RECT ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, IDM_SHAPE_POINT,   MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_POINT   ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, IDM_SHAPE_LINE,    MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_LINE    ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, IDM_SHAPE_RECT,    MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_RECT    ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, IDM_SHAPE_ELLIPSE, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_ELLIPSE ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, IDM_SHAPE_LINEOO,  MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_LINEOO  ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, IDM_SHAPE_CUBE,    MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_CUBE    ? MF_CHECKED : MF_UNCHECKED));
+}
+
+void MyEditor::SelectShape(int shapeId) {
+    m_currentShape = shapeId;
+    SendMessage(m_hToolBar, TB_CHECKBUTTON, shapeId, MAKELPARAM(TRUE, 0));
 }
 
 void MyEditor::OnCommand(WPARAM wParam, LPARAM lParam) {
-    switch (LOWORD(wParam)) {
+    int id = LOWORD(wParam);
+    switch (id) {
     case IDM_SHAPE_POINT:
-        m_currentShape = IDM_SHAPE_POINT;
-        break;
     case IDM_SHAPE_LINE:
-        m_currentShape = IDM_SHAPE_LINE;
-        break;
     case IDM_SHAPE_RECT:
-        m_currentShape = IDM_SHAPE_RECT;
-        break;
     case IDM_SHAPE_ELLIPSE:
-        m_currentShape = IDM_SHAPE_ELLIPSE;
+    case IDM_SHAPE_LINEOO:
+    case IDM_SHAPE_CUBE:
+        SelectShape(id);
         break;
     case IDM_FILE_EXIT:
         DestroyWindow(m_hWnd);
@@ -191,6 +271,8 @@ Shape* MyEditor::CreateSelectedShape() {
     case IDM_SHAPE_LINE:    return new LineShape();
     case IDM_SHAPE_RECT:    return new RectShape();
     case IDM_SHAPE_ELLIPSE: return new EllipseShape();
+    case IDM_SHAPE_LINEOO:  return new LineWithCirclesShape();
+    case IDM_SHAPE_CUBE:    return new CubeShape();
     default:                return nullptr;
     }
 }
@@ -200,7 +282,6 @@ void MyEditor::DrawRubberBand() {
 
     HDC hdc = GetDC(m_hWnd);
     int oldROP = SetROP2(hdc, R2_NOTXORPEN);
-    // Пунктирний стиль лінії для "гумового" сліду (вимога п.3)
     HPEN hPen = CreatePen(PS_DOT, 1, RGB(0, 0, 0));
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, GetStockObject(NULL_BRUSH));

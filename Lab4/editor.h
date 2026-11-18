@@ -16,6 +16,8 @@ private:
     int m_shapeCount;
     static const int m_maxShapes = 111; //вар11
 
+    void CreateToolbar();
+    void SelectShape(int shapeId);
     Shape* CreateSelectedShape();
     void DrawRubberBand();
 

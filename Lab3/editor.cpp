@@ -111,31 +111,32 @@ void EditorWindow::OnCreate() {
 
     SendMessage(m_hToolBar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
 
-    //додавання стандартних іконок Windows (заглушки для фігур)
-    TBADDBITMAP tbab;
-    tbab.hInst = HINST_COMMCTRL;
-    tbab.nID = IDB_STD_SMALL_COLOR;
-    SendMessage(m_hToolBar, TB_ADDBITMAP, 0, (LPARAM)&tbab);
+    //додавання власних іконок фігур із ресурсів
+    HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR24 | ILC_MASK, 4, 0);
+    HBITMAP hBmp = (HBITMAP)LoadImageW(m_hInstance, MAKEINTRESOURCEW(IDB_TOOLBAR), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
+    ImageList_AddMasked(hImageList, hBmp, RGB(192, 192, 192));
+    DeleteObject(hBmp);
+    SendMessage(m_hToolBar, TB_SETIMAGELIST, 0, (LPARAM)hImageList);
 
     TBBUTTON tbb[4];
     ZeroMemory(tbb, sizeof(tbb));
 
-    tbb[0].iBitmap = STD_FILENEW;
+    tbb[0].iBitmap = 0; //крапка
     tbb[0].fsState = TBSTATE_ENABLED;
     tbb[0].fsStyle = TBSTYLE_BUTTON;
     tbb[0].idCommand = IDM_SHAPE_POINT;
 
-    tbb[1].iBitmap = STD_FILEOPEN;
+    tbb[1].iBitmap = 1; //лінія
     tbb[1].fsState = TBSTATE_ENABLED;
     tbb[1].fsStyle = TBSTYLE_BUTTON;
     tbb[1].idCommand = IDM_SHAPE_LINE;
 
-    tbb[2].iBitmap = STD_FILESAVE;
+    tbb[2].iBitmap = 2; //прямокутник
     tbb[2].fsState = TBSTATE_ENABLED;
     tbb[2].fsStyle = TBSTYLE_BUTTON;
     tbb[2].idCommand = IDM_SHAPE_RECT;
 
-    tbb[3].iBitmap = STD_PRINTPRE;
+    tbb[3].iBitmap = 3; //еліпс
     tbb[3].fsState = TBSTATE_ENABLED;
     tbb[3].fsStyle = TBSTYLE_BUTTON;
     tbb[3].idCommand = IDM_SHAPE_ELLIPSE;

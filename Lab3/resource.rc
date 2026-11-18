@@ -20,3 +20,5 @@ BEGIN
         MENUITEM "Про програму...",                40006
     END
 END
+
+IDB_TOOLBAR BITMAP "toolbar.bmp"

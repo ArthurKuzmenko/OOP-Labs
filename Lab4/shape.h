@@ -24,7 +24,10 @@ public:
 };
 
 class RectShape : virtual public Shape {
+protected:
+    bool m_isFilled;
 public:
+    RectShape() : m_isFilled(true) {}
     void Show(HDC hdc) override;
     void DrawRubberBand(HDC hdc) override;
 };
@@ -40,6 +43,14 @@ class LineWithCirclesShape : public LineShape, public EllipseShape {
 private:
     static const long RADIUS = 6;
 public:
+    void Show(HDC hdc) override;
+    void DrawRubberBand(HDC hdc) override;
+};
+
+//нова фігура 2:каркас куба(множинне успадкування від RectShape та LineShape)
+class CubeShape : public RectShape, public LineShape {
+public:
+    CubeShape() { m_isFilled = false; }
     void Show(HDC hdc) override;
     void DrawRubberBand(HDC hdc) override;
 };

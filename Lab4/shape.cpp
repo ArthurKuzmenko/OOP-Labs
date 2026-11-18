@@ -38,7 +38,9 @@ void LineShape::DrawRubberBand(HDC hdc) {
 //прямокутник(ввід по 2 протилежних кутах, жовте заповнення)
 void RectShape::Show(HDC hdc) {
     HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-    HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 0));
+    HBRUSH hBrush = m_isFilled
+        ? CreateSolidBrush(RGB(255, 255, 0))
+        : (HBRUSH)GetStockObject(NULL_BRUSH);
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
 
@@ -47,7 +49,9 @@ void RectShape::Show(HDC hdc) {
     SelectObject(hdc, hOldPen);
     SelectObject(hdc, hOldBrush);
     DeleteObject(hPen);
-    DeleteObject(hBrush);
+    if (m_isFilled) {
+        DeleteObject(hBrush);
+    }
 }
 
 void RectShape::DrawRubberBand(HDC hdc) {
@@ -80,18 +84,14 @@ void EllipseShape::DrawRubberBand(HDC hdc) {
 void LineWithCirclesShape::Show(HDC hdc) {
     long origX1 = xs1, origY1 = ys1, origX2 = xs2, origY2 = ys2;
 
-    //малюємо лінію базовим методом LineShape::Show
     LineShape::Show(hdc);
 
-    //малює перший кружечок у точці(origX1, origY1) через EllipseShape::Show
     SetCoord(origX1, origY1, origX1 + RADIUS, origY1 + RADIUS);
     EllipseShape::Show(hdc);
 
-    //малює другий кружечок у точці(origX2, origY2) через EllipseShape::Show
     SetCoord(origX2, origY2, origX2 + RADIUS, origY2 + RADIUS);
     EllipseShape::Show(hdc);
 
-    //відновлює початкові координати фігури
     SetCoord(origX1, origY1, origX2, origY2);
 }
 
@@ -105,6 +105,62 @@ void LineWithCirclesShape::DrawRubberBand(HDC hdc) {
 
     SetCoord(origX2, origY2, origX2 + RADIUS, origY2 + RADIUS);
     EllipseShape::DrawRubberBand(hdc);
+
+    SetCoord(origX1, origY1, origX2, origY2);
+}
+
+//каркас куба(використовує Show із RectShape та LineShape)
+void CubeShape::Show(HDC hdc) {
+    long origX1 = xs1, origY1 = ys1, origX2 = xs2, origY2 = ys2;
+    long shiftX = (origX2 - origX1) / 3;
+    long shiftY = (origY2 - origY1) / 3;
+
+    //задня грань
+    SetCoord(origX1 + shiftX, origY1 - shiftY, origX2 + shiftX, origY2 - shiftY);
+    RectShape::Show(hdc);
+
+    //передня грань
+    SetCoord(origX1, origY1, origX2, origY2);
+    RectShape::Show(hdc);
+
+    //чотири ребра між гранями
+    SetCoord(origX1, origY1, origX1 + shiftX, origY1 - shiftY);
+    LineShape::Show(hdc);
+
+    SetCoord(origX2, origY1, origX2 + shiftX, origY1 - shiftY);
+    LineShape::Show(hdc);
+
+    SetCoord(origX1, origY2, origX1 + shiftX, origY2 - shiftY);
+    LineShape::Show(hdc);
+
+    SetCoord(origX2, origY2, origX2 + shiftX, origY2 - shiftY);
+    LineShape::Show(hdc);
+
+    SetCoord(origX1, origY1, origX2, origY2);
+}
+
+void CubeShape::DrawRubberBand(HDC hdc) {
+    long origX1 = xs1, origY1 = ys1, origX2 = xs2, origY2 = ys2;
+    long shiftX = (origX2 - origX1) / 3;
+    long shiftY = (origY2 - origY1) / 3;
+
+    SetCoord(origX1 + shiftX, origY1 - shiftY, origX2 + shiftX, origY2 - shiftY);
+    RectShape::DrawRubberBand(hdc);
+
+    SetCoord(origX1, origY1, origX2, origY2);
+    RectShape::DrawRubberBand(hdc);
+
+    SetCoord(origX1, origY1, origX1 + shiftX, origY1 - shiftY);
+    LineShape::DrawRubberBand(hdc);
+
+    SetCoord(origX2, origY1, origX2 + shiftX, origY1 - shiftY);
+    LineShape::DrawRubberBand(hdc);
+
+    SetCoord(origX1, origY2, origX1 + shiftX, origY2 - shiftY);
+    LineShape::DrawRubberBand(hdc);
+
+    SetCoord(origX2, origY2, origX2 + shiftX, origY2 - shiftY);
+    LineShape::DrawRubberBand(hdc);
 
     SetCoord(origX1, origY1, origX2, origY2);
 }

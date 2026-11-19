@@ -44,6 +44,20 @@ void MyEditor::OnTableRowSelected(int rowIndex) {
     }
 }
 
+void MyEditor::OnTableRowDeleted(int rowIndex) {
+    if (rowIndex < 0 || rowIndex >= m_shapeCount) return;
+
+    delete m_pcshape[rowIndex];
+    for (int i = rowIndex; i < m_shapeCount - 1; i++) {
+        m_pcshape[i] = m_pcshape[i + 1];
+    }
+    m_pcshape[m_shapeCount - 1] = nullptr;
+    m_shapeCount--;
+
+    OnTableRowSelected(-1);
+    SyncTable();
+}
+
 void MyEditor::SyncTable() {
     if (!m_table.IsOpen()) return;
 
@@ -81,7 +95,7 @@ void MyEditor::SaveToFile() {
 
     std::ofstream out{ std::filesystem::path(szFile) };
     if (!out.is_open()) {
-        MessageBoxW(m_hWnd, L"Не вдалося відкрити файл для запису.", L"Помилка", MB_OK | MB_ICONERROR);
+        MessageBoxW(m_hWnd, L"Не вдалося відкрити файл для запису.", L"Вийшла помилка", MB_OK | MB_ICONERROR);
         return;
     }
 

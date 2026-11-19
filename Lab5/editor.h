@@ -17,6 +17,7 @@ private:
     int m_shapeCount;
     int m_selectedIndex;
     static const int m_maxShapes = 111;
+
     MyTable m_table;
 
     //Singleton Меєрса(вар11)
@@ -45,6 +46,7 @@ public:
 
     //реалізація ITableListener(Observer/Listener)
     void OnTableRowSelected(int rowIndex) override;
+    void OnTableRowDeleted(int rowIndex) override;
 
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

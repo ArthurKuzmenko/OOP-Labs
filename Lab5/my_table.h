@@ -15,6 +15,7 @@ class ITableListener {
 public:
     virtual ~ITableListener() {}
     virtual void OnTableRowSelected(int rowIndex) = 0;
+    virtual void OnTableRowDeleted(int rowIndex) = 0;
 };
 
 class MyTable {
@@ -26,6 +27,7 @@ private:
     bool m_isUpdating;
 
     void InitListView();
+    void DeleteSelectedRow();
     static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 public:

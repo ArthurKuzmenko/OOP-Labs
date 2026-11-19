@@ -3,6 +3,7 @@
 #define IDR_MAIN_MENU                   101
 #define IDD_TABLE_DIALOG                102
 #define IDC_TABLE_LIST                  1001
+#define IDC_BTN_DELETE                  1002
 
 #define IDM_FILE_EXIT                   40001
 #define IDM_SHAPE_POINT                 40002

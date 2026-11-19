@@ -28,6 +28,15 @@ void MyTable::InitListView() {
     }
 }
 
+void MyTable::DeleteSelectedRow() {
+    if (!hList || !m_pListener) return;
+
+    int sel = (int)SendMessageW(hList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+    if (sel >= 0) {
+        m_pListener->OnTableRowDeleted(sel);
+    }
+}
+
 void MyTable::Show(HINSTANCE hInstance, HWND parent) {
     hParent = parent;
     if (IsOpen()) {
@@ -121,31 +130,46 @@ INT_PTR CALLBACK MyTable::DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM
     case WM_SIZE: {
         int width = LOWORD(lParam);
         int height = HIWORD(lParam);
-        if (pThis->hList && width > 14 && height > 14) {
-            MoveWindow(pThis->hList, 7, 7, width - 14, height - 14, TRUE);
+        HWND hBtn = GetDlgItem(hDlg, IDC_BTN_DELETE);
+        if (pThis->hList && width > 14 && height > 42) {
+            MoveWindow(pThis->hList, 7, 7, width - 14, height - 38, TRUE);
+        }
+        if (hBtn && width > 14 && height > 30) {
+            MoveWindow(hBtn, 7, height - 25, 135, 20, TRUE);
         }
         return TRUE;
     }
     case WM_NOTIFY: {
         LPNMHDR lpnm = (LPNMHDR)lParam;
-        if (lpnm->idFrom == IDC_TABLE_LIST && lpnm->code == LVN_ITEMCHANGED && !pThis->m_isUpdating) {
-            LPNMLISTVIEW pnmv = (LPNMLISTVIEW)lParam;
-            if (pnmv->uChanged & LVIF_STATE) {
-                if (pnmv->uNewState & LVIS_SELECTED) {
-                    if (pThis->m_pListener) {
-                        pThis->m_pListener->OnTableRowSelected(pnmv->iItem);
+        if (lpnm->idFrom == IDC_TABLE_LIST) {
+            if (lpnm->code == LVN_ITEMCHANGED && !pThis->m_isUpdating) {
+                LPNMLISTVIEW pnmv = (LPNMLISTVIEW)lParam;
+                if (pnmv->uChanged & LVIF_STATE) {
+                    if (pnmv->uNewState & LVIS_SELECTED) {
+                        if (pThis->m_pListener) {
+                            pThis->m_pListener->OnTableRowSelected(pnmv->iItem);
+                        }
+                    } else if ((pnmv->uOldState & LVIS_SELECTED) && !(pnmv->uNewState & LVIS_SELECTED)) {
+                        int sel = (int)SendMessageW(pThis->hList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+                        if (sel == -1 && pThis->m_pListener) {
+                            pThis->m_pListener->OnTableRowSelected(-1);
+                        }
                     }
-                } else if ((pnmv->uOldState & LVIS_SELECTED) && !(pnmv->uNewState & LVIS_SELECTED)) {
-                    int sel = (int)SendMessageW(pThis->hList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
-                    if (sel == -1 && pThis->m_pListener) {
-                        pThis->m_pListener->OnTableRowSelected(-1);
-                    }
+                }
+            } else if (lpnm->code == LVN_KEYDOWN) {
+                LPNMLVKEYDOWN pnkd = (LPNMLVKEYDOWN)lParam;
+                if (pnkd->wVKey == VK_DELETE) {
+                    pThis->DeleteSelectedRow();
                 }
             }
         }
         return TRUE;
     }
     case WM_COMMAND:
+        if (LOWORD(wParam) == IDC_BTN_DELETE) {
+            pThis->DeleteSelectedRow();
+            return TRUE;
+        }
         if (LOWORD(wParam) == IDCANCEL) {
             pThis->Close();
             return TRUE;

@@ -14,3 +14,4 @@
 #define IDM_SHAPE_CUBE                  40008
 #define IDM_VIEW_TABLE                  40009
 #define IDM_FILE_SAVE                   40010
+#define IDM_FILE_OPEN                   40011

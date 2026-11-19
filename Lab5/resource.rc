@@ -6,6 +6,7 @@ IDR_MAIN_MENU MENU
 BEGIN
     POPUP "Файл"
     BEGIN
+        MENUITEM "Відкрити...",                 IDM_FILE_OPEN
         MENUITEM "Зберегти...",                 IDM_FILE_SAVE
         MENUITEM SEPARATOR
         MENUITEM "Вихід",                       IDM_FILE_EXIT

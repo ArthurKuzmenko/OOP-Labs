@@ -4,6 +4,8 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <string>
 #include <vector>
 
 MyEditor::MyEditor()
@@ -16,10 +18,7 @@ MyEditor::MyEditor()
 
 MyEditor::~MyEditor() {
     delete m_pDraftShape;
-    for (int i = 0; i < m_shapeCount; i++) {
-        delete m_pcshape[i];
-        m_pcshape[i] = nullptr;
-    }
+    ClearShapes();
     delete[] m_pcshape;
 }
 
@@ -30,6 +29,15 @@ void MyEditor::Init(HINSTANCE hInstance) {
 bool MyEditor::IsDialogMsg(MSG* pMsg) {
     HWND hDlg = m_table.GetDialogHandle();
     return (hDlg && IsWindow(hDlg) && IsDialogMessageW(hDlg, pMsg));
+}
+
+void MyEditor::ClearShapes() {
+    for (int i = 0; i < m_shapeCount; i++) {
+        delete m_pcshape[i];
+        m_pcshape[i] = nullptr;
+    }
+    m_shapeCount = 0;
+    m_selectedIndex = -1;
 }
 
 void MyEditor::OnTableRowSelected(int rowIndex) {
@@ -111,6 +119,56 @@ void MyEditor::SaveToFile() {
 
     out.close();
     MessageBoxW(m_hWnd, L"Множину об'єктів успішно збережено у файл.", L"Збереження", MB_OK | MB_ICONINFORMATION);
+}
+
+void MyEditor::LoadFromFile() {
+    wchar_t szFile[MAX_PATH] = L"";
+
+    OPENFILENAMEW ofn = { 0 };
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = m_hWnd;
+    ofn.lpstrFilter = L"Текстові файли (*.txt)\0*.txt\0Усі файли (*.*)\0*.*\0";
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrDefExt = L"txt";
+    ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+
+    if (!GetOpenFileNameW(&ofn)) {
+        return;
+    }
+
+    std::ifstream in{ std::filesystem::path(szFile) };
+    if (!in.is_open()) {
+        MessageBoxW(m_hWnd, L"Не вдалося відкрити файл для читання.", L"Помилка", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    ClearShapes();
+
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.empty()) continue;
+
+        std::istringstream iss(line);
+        std::string tag;
+        long x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+
+        if (iss >> tag >> x1 >> y1 >> x2 >> y2) {
+            if (m_shapeCount >= m_maxShapes) {
+                break;
+            }
+            Shape* shape = CreateShapeByTag(tag);
+            if (shape) {
+                shape->SetCoord(x1, y1, x2, y2);
+                m_pcshape[m_shapeCount++] = shape;
+            }
+        }
+    }
+
+    in.close();
+
+    OnTableRowSelected(-1);
+    SyncTable();
 }
 
 bool MyEditor::Create(PCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight) {
@@ -360,6 +418,9 @@ void MyEditor::OnCommand(WPARAM wParam, LPARAM lParam) {
             SyncTable();
         }
         break;
+    case IDM_FILE_OPEN:
+        LoadFromFile();
+        break;
     case IDM_FILE_SAVE:
         SaveToFile();
         break;
@@ -379,6 +440,16 @@ Shape* MyEditor::CreateSelectedShape() {
     case IDM_SHAPE_CUBE:    return new CubeShape();
     default:                return nullptr;
     }
+}
+
+Shape* MyEditor::CreateShapeByTag(const std::string& tag) {
+    if (tag == "POINT")   return new PointShape();
+    if (tag == "LINE")    return new LineShape();
+    if (tag == "RECT")    return new RectShape();
+    if (tag == "ELLIPSE") return new EllipseShape();
+    if (tag == "LINEOO")  return new LineWithCirclesShape();
+    if (tag == "CUBE")    return new CubeShape();
+    return nullptr;
 }
 
 void MyEditor::DrawRubberBand() {

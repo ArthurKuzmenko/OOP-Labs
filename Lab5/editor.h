@@ -1,6 +1,7 @@
 #pragma once
 #include <windows.h>
 #include <commctrl.h>
+#include <string>
 #include "shape.h"
 #include "my_table.h"
 
@@ -29,9 +30,12 @@ private:
     void CreateToolbar();
     void SelectShape(int shapeId);
     Shape* CreateSelectedShape();
+    Shape* CreateShapeByTag(const std::string& tag);
+    void ClearShapes();
     void DrawRubberBand();
     void SyncTable();
     void SaveToFile();
+    void LoadFromFile();
 
 public:
     static MyEditor& getInstance() {

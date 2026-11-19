@@ -10,7 +10,16 @@ void Shape::SetCoord(long x1, long y1, long x2, long y2) {
 
 //крапка
 void PointShape::Show(HDC hdc) {
-    SetPixel(hdc, xs1, ys1, RGB(0, 0, 0));
+    if (m_isSelected) {
+        HPEN hPen = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
+        HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+        HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, GetStockObject(NULL_BRUSH));
+        Ellipse(hdc, xs1 - 4, ys1 - 4, xs1 + 4, ys1 + 4);
+        SelectObject(hdc, hOldBrush);
+        SelectObject(hdc, hOldPen);
+        DeleteObject(hPen);
+    }
+    SetPixel(hdc, xs1, ys1, GetStrokeColor());
 }
 
 void PointShape::DrawRubberBand(HDC hdc) {
@@ -20,7 +29,7 @@ void PointShape::DrawRubberBand(HDC hdc) {
 
 //лінія
 void LineShape::Show(HDC hdc) {
-    HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+    HPEN hPen = CreatePen(PS_SOLID, GetStrokeWidth(), GetStrokeColor());
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
 
     MoveToEx(hdc, xs1, ys1, NULL);
@@ -37,7 +46,7 @@ void LineShape::DrawRubberBand(HDC hdc) {
 
 //прямокутник(ввід по 2 протилежних кутах, жовте заповнення)
 void RectShape::Show(HDC hdc) {
-    HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+    HPEN hPen = CreatePen(PS_SOLID, GetStrokeWidth(), GetStrokeColor());
     HBRUSH hBrush = m_isFilled
         ? CreateSolidBrush(RGB(255, 255, 0))
         : (HBRUSH)GetStockObject(NULL_BRUSH);
@@ -60,7 +69,7 @@ void RectShape::DrawRubberBand(HDC hdc) {
 
 //еліпс(ввід від центру до кута, без заповнення)
 void EllipseShape::Show(HDC hdc) {
-    HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+    HPEN hPen = CreatePen(PS_SOLID, GetStrokeWidth(), GetStrokeColor());
     HBRUSH hBrush = (HBRUSH)GetStockObject(NULL_BRUSH);
     HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);

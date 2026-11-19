@@ -9,8 +9,9 @@
 MyEditor::MyEditor()
     : m_hWnd(NULL), m_hToolBar(NULL), m_hInstance(NULL), m_currentShape(IDM_SHAPE_POINT),
       m_isDrawing(false), m_xStart(0), m_yStart(0), m_xEnd(0), m_yEnd(0),
-      m_pDraftShape(nullptr), m_shapeCount(0) {
+      m_pDraftShape(nullptr), m_shapeCount(0), m_selectedIndex(-1) {
     m_pcshape = new Shape*[m_maxShapes];
+    m_table.SetListener(this);
 }
 
 MyEditor::~MyEditor() {
@@ -29,6 +30,18 @@ void MyEditor::Init(HINSTANCE hInstance) {
 bool MyEditor::IsDialogMsg(MSG* pMsg) {
     HWND hDlg = m_table.GetDialogHandle();
     return (hDlg && IsWindow(hDlg) && IsDialogMessageW(hDlg, pMsg));
+}
+
+void MyEditor::OnTableRowSelected(int rowIndex) {
+    m_selectedIndex = rowIndex;
+    for (int i = 0; i < m_shapeCount; i++) {
+        if (m_pcshape[i]) {
+            m_pcshape[i]->SetSelected(i == m_selectedIndex);
+        }
+    }
+    if (m_hWnd && IsWindow(m_hWnd)) {
+        InvalidateRect(m_hWnd, NULL, TRUE);
+    }
 }
 
 void MyEditor::SyncTable() {
@@ -201,14 +214,14 @@ void MyEditor::CreateToolbar() {
     MoveToEx(hdcMem, 16 + 3, 12, NULL);
     LineTo(hdcMem, 16 + 13, 3);
 
-    //прямокутник (жовте заповнення)
+    //прямокутник(з жовтим заповненням)
     HBRUSH hYellowBrush = CreateSolidBrush(RGB(255, 255, 0));
     hOldBrush = (HBRUSH)SelectObject(hdcMem, hYellowBrush);
     Rectangle(hdcMem, 32 + 3, 3, 32 + 13, 13);
     SelectObject(hdcMem, hOldBrush);
     DeleteObject(hYellowBrush);
 
-    //еліпс (без заповнення)
+    //еліпс(без заповнення)
     hOldBrush = (HBRUSH)SelectObject(hdcMem, GetStockObject(NULL_BRUSH));
     Ellipse(hdcMem, 48 + 2, 4, 48 + 14, 12);
     SelectObject(hdcMem, hOldBrush);
@@ -407,7 +420,8 @@ void MyEditor::OnLButtonUp(LPARAM lParam) {
         m_pDraftShape->SetCoord(m_xStart, m_yStart, m_xEnd, m_yEnd);
         m_pcshape[m_shapeCount++] = m_pDraftShape;
         m_pDraftShape = nullptr;
-        InvalidateRect(m_hWnd, NULL, TRUE);
+
+        OnTableRowSelected(-1);
         SyncTable();
     }
 }

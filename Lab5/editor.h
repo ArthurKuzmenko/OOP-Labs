@@ -4,7 +4,7 @@
 #include "shape.h"
 #include "my_table.h"
 
-class MyEditor {
+class MyEditor : public ITableListener {
 private:
     HWND m_hWnd;
     HWND m_hToolBar;
@@ -15,11 +15,11 @@ private:
     Shape** m_pcshape;
     Shape* m_pDraftShape;
     int m_shapeCount;
+    int m_selectedIndex;
     static const int m_maxShapes = 111;
-
     MyTable m_table;
 
-    //Singleton Меєрса (вар11)
+    //Singleton Меєрса(вар11)
     MyEditor();
     ~MyEditor();
     MyEditor(const MyEditor&) = delete;
@@ -42,6 +42,9 @@ public:
     bool Create(PCWSTR lpWindowName, DWORD dwStyle, int x = CW_USEDEFAULT, int y = CW_USEDEFAULT, int nWidth = 800, int nHeight = 600);
     HWND Window() const { return m_hWnd; }
     bool IsDialogMsg(MSG* pMsg);
+
+    //реалізація ITableListener(Observer/Listener)
+    void OnTableRowSelected(int rowIndex) override;
 
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

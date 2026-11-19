@@ -10,11 +10,20 @@ struct TableRowData {
     long x1, y1, x2, y2;
 };
 
+//інтерфейс спостерігача(Observer/Listener) без залежностей від інших модулів
+class ITableListener {
+public:
+    virtual ~ITableListener() {}
+    virtual void OnTableRowSelected(int rowIndex) = 0;
+};
+
 class MyTable {
 private:
     HWND hDlg;
     HWND hParent;
     HWND hList;
+    ITableListener* m_pListener;
+    bool m_isUpdating;
 
     void InitListView();
     static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -22,6 +31,8 @@ private:
 public:
     MyTable();
     ~MyTable();
+
+    void SetListener(ITableListener* listener) { m_pListener = listener; }
 
     void Show(HINSTANCE hInstance, HWND parent);
     void Close();

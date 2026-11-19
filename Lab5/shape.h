@@ -4,8 +4,13 @@
 class Shape {
 protected:
     long xs1, ys1, xs2, ys2;
+    bool m_isSelected;
+
+    COLORREF GetStrokeColor() const { return m_isSelected ? RGB(255, 0, 0) : RGB(0, 0, 0); }
+    int GetStrokeWidth() const { return m_isSelected ? 2 : 1; }
+
 public:
-    Shape() : xs1(0), ys1(0), xs2(0), ys2(0) {}
+    Shape() : xs1(0), ys1(0), xs2(0), ys2(0), m_isSelected(false) {}
     virtual ~Shape() {}
 
     void SetCoord(long x1, long y1, long x2, long y2);
@@ -13,6 +18,9 @@ public:
     long GetY1() const { return ys1; }
     long GetX2() const { return xs2; }
     long GetY2() const { return ys2; }
+
+    void SetSelected(bool selected) { m_isSelected = selected; }
+    bool IsSelected() const { return m_isSelected; }
 
     virtual const wchar_t* GetName() const = 0;
     virtual const char* GetTypeTag() const = 0;

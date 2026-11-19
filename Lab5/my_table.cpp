@@ -1,7 +1,8 @@
 #include "my_table.h"
 #include "resource.h"
 
-MyTable::MyTable() : hDlg(NULL), hParent(NULL), hList(NULL) {}
+MyTable::MyTable()
+    : hDlg(NULL), hParent(NULL), hList(NULL), m_pListener(nullptr), m_isUpdating(false) {}
 
 MyTable::~MyTable() {
     Close();
@@ -54,6 +55,9 @@ void MyTable::Show(HINSTANCE hInstance, HWND parent) {
 }
 
 void MyTable::Close() {
+    if (m_pListener) {
+        m_pListener->OnTableRowSelected(-1);
+    }
     if (hDlg && IsWindow(hDlg)) {
         DestroyWindow(hDlg);
     }
@@ -64,6 +68,7 @@ void MyTable::Close() {
 void MyTable::UpdateData(const std::vector<TableRowData>& data) {
     if (!IsOpen() || !hList) return;
 
+    m_isUpdating = true;
     SendMessageW(hList, LVM_DELETEALLITEMS, 0, 0);
 
     for (size_t i = 0; i < data.size(); i++) {
@@ -93,6 +98,8 @@ void MyTable::UpdateData(const std::vector<TableRowData>& data) {
         setSubItem(4, x2Str);
         setSubItem(5, y2Str);
     }
+
+    m_isUpdating = false;
 }
 
 INT_PTR CALLBACK MyTable::DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -116,6 +123,25 @@ INT_PTR CALLBACK MyTable::DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM
         int height = HIWORD(lParam);
         if (pThis->hList && width > 14 && height > 14) {
             MoveWindow(pThis->hList, 7, 7, width - 14, height - 14, TRUE);
+        }
+        return TRUE;
+    }
+    case WM_NOTIFY: {
+        LPNMHDR lpnm = (LPNMHDR)lParam;
+        if (lpnm->idFrom == IDC_TABLE_LIST && lpnm->code == LVN_ITEMCHANGED && !pThis->m_isUpdating) {
+            LPNMLISTVIEW pnmv = (LPNMLISTVIEW)lParam;
+            if (pnmv->uChanged & LVIF_STATE) {
+                if (pnmv->uNewState & LVIS_SELECTED) {
+                    if (pThis->m_pListener) {
+                        pThis->m_pListener->OnTableRowSelected(pnmv->iItem);
+                    }
+                } else if ((pnmv->uOldState & LVIS_SELECTED) && !(pnmv->uNewState & LVIS_SELECTED)) {
+                    int sel = (int)SendMessageW(pThis->hList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+                    if (sel == -1 && pThis->m_pListener) {
+                        pThis->m_pListener->OnTableRowSelected(-1);
+                    }
+                }
+            }
         }
         return TRUE;
     }

@@ -11,9 +11,8 @@
 MyEditor::MyEditor()
     : m_hWnd(NULL), m_hToolBar(NULL), m_hInstance(NULL), m_currentShape(IDM_SHAPE_POINT),
       m_isDrawing(false), m_xStart(0), m_yStart(0), m_xEnd(0), m_yEnd(0),
-      m_pDraftShape(nullptr), m_shapeCount(0), m_selectedIndex(-1) {
+      m_pDraftShape(nullptr), m_shapeCount(0), m_selectedIndex(-1), m_pTable(nullptr) {
     m_pcshape = new Shape*[m_maxShapes];
-    m_table.SetListener(this);
 }
 
 MyEditor::~MyEditor() {
@@ -27,7 +26,8 @@ void MyEditor::Init(HINSTANCE hInstance) {
 }
 
 bool MyEditor::IsDialogMsg(MSG* pMsg) {
-    HWND hDlg = m_table.GetDialogHandle();
+    if (!m_pTable) return false;
+    HWND hDlg = m_pTable->GetDialogHandle();
     return (hDlg && IsWindow(hDlg) && IsDialogMessageW(hDlg, pMsg));
 }
 
@@ -67,7 +67,7 @@ void MyEditor::OnTableRowDeleted(int rowIndex) {
 }
 
 void MyEditor::SyncTable() {
-    if (!m_table.IsOpen()) return;
+    if (!m_pTable || !m_pTable->IsOpen()) return;
 
     std::vector<TableRowData> rows;
     rows.reserve(m_shapeCount);
@@ -82,7 +82,7 @@ void MyEditor::SyncTable() {
             });
         }
     }
-    m_table.UpdateData(rows);
+    m_pTable->UpdateData(rows);
 }
 
 void MyEditor::SaveToFile() {
@@ -103,7 +103,7 @@ void MyEditor::SaveToFile() {
 
     std::ofstream out{ std::filesystem::path(szFile) };
     if (!out.is_open()) {
-        MessageBoxW(m_hWnd, L"Не вдалося відкрити файл для запису.", L"Вийшла помилка", MB_OK | MB_ICONERROR);
+        MessageBoxW(m_hWnd, L"Не вдалося відкрити файл для запису.", L"Помилка", MB_OK | MB_ICONERROR);
         return;
     }
 
@@ -244,7 +244,7 @@ LRESULT MyEditor::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_DESTROY:
-        m_table.Close();
+        if (m_pTable) m_pTable->Close();
         PostQuitMessage(0);
         break;
     default:
@@ -391,7 +391,7 @@ void MyEditor::OnInitMenuPopup(HMENU hMenu) {
     CheckMenuItem(hMenu, IDM_SHAPE_ELLIPSE, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_ELLIPSE ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, IDM_SHAPE_LINEOO,  MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_LINEOO  ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, IDM_SHAPE_CUBE,    MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_CUBE    ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hMenu, IDM_VIEW_TABLE,    MF_BYCOMMAND | (m_table.IsOpen()                   ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, IDM_VIEW_TABLE,    MF_BYCOMMAND | (m_pTable && m_pTable->IsOpen()     ? MF_CHECKED : MF_UNCHECKED));
 }
 
 void MyEditor::SelectShape(int shapeId) {
@@ -411,11 +411,13 @@ void MyEditor::OnCommand(WPARAM wParam, LPARAM lParam) {
         SelectShape(id);
         break;
     case IDM_VIEW_TABLE:
-        if (m_table.IsOpen()) {
-            m_table.Close();
-        } else {
-            m_table.Show(m_hInstance, m_hWnd);
-            SyncTable();
+        if (m_pTable) {
+            if (m_pTable->IsOpen()) {
+                m_pTable->Close();
+            } else {
+                m_pTable->Show(m_hInstance, m_hWnd);
+                SyncTable();
+            }
         }
         break;
     case IDM_FILE_OPEN:

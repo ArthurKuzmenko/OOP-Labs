@@ -19,7 +19,7 @@ private:
     int m_selectedIndex;
     static const int m_maxShapes = 111;
 
-    MyTable m_table;
+    MyTable* m_pTable;
 
     //Singleton Меєрса(вар11)
     MyEditor();
@@ -42,6 +42,8 @@ public:
         static MyEditor instance;
         return instance;
     }
+
+    void SetTable(MyTable* pTable) { m_pTable = pTable; }
 
     void Init(HINSTANCE hInstance);
     bool Create(PCWSTR lpWindowName, DWORD dwStyle, int x = CW_USEDEFAULT, int y = CW_USEDEFAULT, int nWidth = 800, int nHeight = 600);

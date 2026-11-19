@@ -1,6 +1,9 @@
 #include "editor.h"
 #include "resource.h"
+#include <commdlg.h>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <vector>
 
 MyEditor::MyEditor()
@@ -45,6 +48,42 @@ void MyEditor::SyncTable() {
         }
     }
     m_table.UpdateData(rows);
+}
+
+void MyEditor::SaveToFile() {
+    wchar_t szFile[MAX_PATH] = L"shapes.txt";
+
+    OPENFILENAMEW ofn = { 0 };
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = m_hWnd;
+    ofn.lpstrFilter = L"Текстові файли (*.txt)\0*.txt\0Усі файли (*.*)\0*.*\0";
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrDefExt = L"txt";
+    ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
+
+    if (!GetSaveFileNameW(&ofn)) {
+        return;
+    }
+
+    std::ofstream out{ std::filesystem::path(szFile) };
+    if (!out.is_open()) {
+        MessageBoxW(m_hWnd, L"Не вдалося відкрити файл для запису.", L"Помилка", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    for (int i = 0; i < m_shapeCount; i++) {
+        if (m_pcshape[i]) {
+            out << m_pcshape[i]->GetTypeTag() << ' '
+                << m_pcshape[i]->GetX1() << ' '
+                << m_pcshape[i]->GetY1() << ' '
+                << m_pcshape[i]->GetX2() << ' '
+                << m_pcshape[i]->GetY2() << '\n';
+        }
+    }
+
+    out.close();
+    MessageBoxW(m_hWnd, L"Множину об'єктів успішно збережено у файл.", L"Збереження", MB_OK | MB_ICONINFORMATION);
 }
 
 bool MyEditor::Create(PCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight) {
@@ -162,14 +201,14 @@ void MyEditor::CreateToolbar() {
     MoveToEx(hdcMem, 16 + 3, 12, NULL);
     LineTo(hdcMem, 16 + 13, 3);
 
-    //прямокутник(з жовтим заповненням)
+    //прямокутник (жовте заповнення)
     HBRUSH hYellowBrush = CreateSolidBrush(RGB(255, 255, 0));
     hOldBrush = (HBRUSH)SelectObject(hdcMem, hYellowBrush);
     Rectangle(hdcMem, 32 + 3, 3, 32 + 13, 13);
     SelectObject(hdcMem, hOldBrush);
     DeleteObject(hYellowBrush);
 
-    //еліпс(без заповнення)
+    //еліпс (без заповнення)
     hOldBrush = (HBRUSH)SelectObject(hdcMem, GetStockObject(NULL_BRUSH));
     Ellipse(hdcMem, 48 + 2, 4, 48 + 14, 12);
     SelectObject(hdcMem, hOldBrush);
@@ -293,6 +332,9 @@ void MyEditor::OnCommand(WPARAM wParam, LPARAM lParam) {
             m_table.Show(m_hInstance, m_hWnd);
             SyncTable();
         }
+        break;
+    case IDM_FILE_SAVE:
+        SaveToFile();
         break;
     case IDM_FILE_EXIT:
         DestroyWindow(m_hWnd);

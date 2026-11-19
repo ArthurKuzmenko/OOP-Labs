@@ -15,11 +15,11 @@ private:
     Shape** m_pcshape;
     Shape* m_pDraftShape;
     int m_shapeCount;
-    static const int m_maxShapes = 111; 
+    static const int m_maxShapes = 111;
 
     MyTable m_table;
 
-    //Singleton Меєрса(вар11)
+    //Singleton Меєрса (вар11)
     MyEditor();
     ~MyEditor();
     MyEditor(const MyEditor&) = delete;
@@ -30,6 +30,7 @@ private:
     Shape* CreateSelectedShape();
     void DrawRubberBand();
     void SyncTable();
+    void SaveToFile();
 
 public:
     static MyEditor& getInstance() {

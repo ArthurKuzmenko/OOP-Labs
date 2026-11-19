@@ -6,7 +6,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     MyEditor& editor = MyEditor::getInstance();
     editor.Init(hInstance);
 
-    if (!editor.Create(L"Графічний редактор (Лаб5)", WS_OVERLAPPEDWINDOW)) {
+    if (!editor.Create(L"Графічний редактор(Лаб5)", WS_OVERLAPPEDWINDOW)) {
         return 0;
     }
 

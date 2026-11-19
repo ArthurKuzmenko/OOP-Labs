@@ -1,6 +1,7 @@
 #include "editor.h"
 #include "resource.h"
 #include <cmath>
+#include <vector>
 
 MyEditor::MyEditor()
     : m_hWnd(NULL), m_hToolBar(NULL), m_hInstance(NULL), m_currentShape(IDM_SHAPE_POINT),
@@ -20,6 +21,30 @@ MyEditor::~MyEditor() {
 
 void MyEditor::Init(HINSTANCE hInstance) {
     m_hInstance = hInstance;
+}
+
+bool MyEditor::IsDialogMsg(MSG* pMsg) {
+    HWND hDlg = m_table.GetDialogHandle();
+    return (hDlg && IsWindow(hDlg) && IsDialogMessageW(hDlg, pMsg));
+}
+
+void MyEditor::SyncTable() {
+    if (!m_table.IsOpen()) return;
+
+    std::vector<TableRowData> rows;
+    rows.reserve(m_shapeCount);
+    for (int i = 0; i < m_shapeCount; i++) {
+        if (m_pcshape[i]) {
+            rows.push_back({
+                m_pcshape[i]->GetName(),
+                m_pcshape[i]->GetX1(),
+                m_pcshape[i]->GetY1(),
+                m_pcshape[i]->GetX2(),
+                m_pcshape[i]->GetY2()
+            });
+        }
+    }
+    m_table.UpdateData(rows);
 }
 
 bool MyEditor::Create(PCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight) {
@@ -95,6 +120,7 @@ LRESULT MyEditor::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_DESTROY:
+        m_table.Close();
         PostQuitMessage(0);
         break;
     default:
@@ -241,6 +267,7 @@ void MyEditor::OnInitMenuPopup(HMENU hMenu) {
     CheckMenuItem(hMenu, IDM_SHAPE_ELLIPSE, MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_ELLIPSE ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, IDM_SHAPE_LINEOO,  MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_LINEOO  ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, IDM_SHAPE_CUBE,    MF_BYCOMMAND | (m_currentShape == IDM_SHAPE_CUBE    ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, IDM_VIEW_TABLE,    MF_BYCOMMAND | (m_table.IsOpen()                   ? MF_CHECKED : MF_UNCHECKED));
 }
 
 void MyEditor::SelectShape(int shapeId) {
@@ -258,6 +285,14 @@ void MyEditor::OnCommand(WPARAM wParam, LPARAM lParam) {
     case IDM_SHAPE_LINEOO:
     case IDM_SHAPE_CUBE:
         SelectShape(id);
+        break;
+    case IDM_VIEW_TABLE:
+        if (m_table.IsOpen()) {
+            m_table.Close();
+        } else {
+            m_table.Show(m_hInstance, m_hWnd);
+            SyncTable();
+        }
         break;
     case IDM_FILE_EXIT:
         DestroyWindow(m_hWnd);
@@ -331,6 +366,7 @@ void MyEditor::OnLButtonUp(LPARAM lParam) {
         m_pcshape[m_shapeCount++] = m_pDraftShape;
         m_pDraftShape = nullptr;
         InvalidateRect(m_hWnd, NULL, TRUE);
+        SyncTable();
     }
 }
 

@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include "shape.h"
+#include "my_table.h"
 
 class MyEditor {
 private:
@@ -14,7 +15,9 @@ private:
     Shape** m_pcshape;
     Shape* m_pDraftShape;
     int m_shapeCount;
-    static const int m_maxShapes = 111;
+    static const int m_maxShapes = 111; 
+
+    MyTable m_table;
 
     //Singleton Меєрса(вар11)
     MyEditor();
@@ -26,6 +29,7 @@ private:
     void SelectShape(int shapeId);
     Shape* CreateSelectedShape();
     void DrawRubberBand();
+    void SyncTable();
 
 public:
     static MyEditor& getInstance() {
@@ -36,6 +40,7 @@ public:
     void Init(HINSTANCE hInstance);
     bool Create(PCWSTR lpWindowName, DWORD dwStyle, int x = CW_USEDEFAULT, int y = CW_USEDEFAULT, int nWidth = 800, int nHeight = 600);
     HWND Window() const { return m_hWnd; }
+    bool IsDialogMsg(MSG* pMsg);
 
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

@@ -17,8 +17,20 @@ BEGIN
         MENUITEM "Лінія з кружечками",          IDM_SHAPE_LINEOO
         MENUITEM "Каркас куба",                 IDM_SHAPE_CUBE
     END
+    POPUP "Вікно"
+    BEGIN
+        MENUITEM "Таблиця об'єктів",            IDM_VIEW_TABLE
+    END
     POPUP "Довідка"
     BEGIN
         MENUITEM "Про програму...",             40006
     END
+END
+
+IDD_TABLE_DIALOG DIALOGEX 0, 0, 310, 190
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Таблиця об'єктів"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL "", IDC_TABLE_LIST, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP, 7, 7, 296, 176
 END
